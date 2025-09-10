@@ -26,12 +26,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(properties = {
-    "spring.task.scheduling.enabled=false",
-    "spring.quartz.job-store-type=memory",
-    "spring.quartz.auto-startup=false"
+        "spring.task.scheduling.enabled=false",
+        "spring.quartz.job-store-type=memory",
+        "spring.quartz.auto-startup=false"
 })
 @SpringBatchTest
-//@ActiveProfiles("test")
+@ActiveProfiles("test")
 class NotificationCleanupJobTest {
 
   @Autowired
@@ -57,45 +57,49 @@ class NotificationCleanupJobTest {
   void notificationCleanupJob_Success() throws Exception {
     // given
     User user = User.builder()
-        .email("test@example.com")
-        .nickname("테스터")
-        .password("password")
-        .userStatus(UserStatus.ACTIVE)
-        .build();
-    userRepository.save(user);
+            .email("test@example.com")
+            .nickname("테스터")
+            .password("password")
+            .userStatus(UserStatus.ACTIVE)
+            .build();
+    userRepository.saveAndFlush(user); // ✅ flush 보장
 
     // 1. 삭제 대상: 확인했고, 8일 전에 업데이트됨
     Notification oldConfirmed = Notification.builder()
-        .user(user)
-        .confirmed(true)
-        .content("삭제될 알림")
-        .resourceType(ResourceType.COMMENT)
-        .resourceId(UUID.randomUUID())
-        .build();
-    Notification toDelete = notificationRepository.save(oldConfirmed);
+            .user(user)
+            .confirmed(true)
+            .content("삭제될 알림")
+            .resourceType(ResourceType.COMMENT)
+            .resourceId(UUID.randomUUID())
+            .build();
+    Notification toDelete = notificationRepository.saveAndFlush(oldConfirmed);
     notificationRepository.updateUpdatedAt(toDelete.getId(), LocalDateTime.now().minusDays(8));
 
     // 2. 삭제 대상 아님: 확인했지만 1일 전에 업데이트됨
     Notification recentConfirmed = Notification.builder()
-        .user(user)
-        .confirmed(true)
-        .content("유지될 확인 알림")
-        .resourceType(ResourceType.COMMENT)
-        .resourceId(UUID.randomUUID())
-        .build();
-    Notification savedRecent = notificationRepository.save(recentConfirmed);
+            .user(user)
+            .confirmed(true)
+            .content("유지될 확인 알림")
+            .resourceType(ResourceType.COMMENT)
+            .resourceId(UUID.randomUUID())
+            .build();
+    Notification savedRecent = notificationRepository.saveAndFlush(recentConfirmed);
     notificationRepository.updateUpdatedAt(savedRecent.getId(), LocalDateTime.now().minusDays(1));
 
     // 3. 삭제 대상 아님: 8일 전 알림이지만 확인 안 됨
     Notification notConfirmed = Notification.builder()
-        .user(user)
-        .confirmed(false)
-        .content("유지될 미확인 알림")
-        .resourceType(ResourceType.COMMENT)
-        .resourceId(UUID.randomUUID())
-        .build();
-    Notification savedNotConfirmed = notificationRepository.save(notConfirmed);
+            .user(user)
+            .confirmed(false)
+            .content("유지될 미확인 알림")
+            .resourceType(ResourceType.COMMENT)
+            .resourceId(UUID.randomUUID())
+            .build();
+    Notification savedNotConfirmed = notificationRepository.saveAndFlush(notConfirmed);
     notificationRepository.updateUpdatedAt(savedNotConfirmed.getId(), LocalDateTime.now().minusDays(8));
+
+    // flush를 한 번 더 전체적으로 보장
+    notificationRepository.flush();
+    userRepository.flush();
 
     // when
     JobParameters jobParameters = jobLauncherTestUtils.getUniqueJobParameters();
@@ -107,7 +111,7 @@ class NotificationCleanupJobTest {
     assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
     assertThat(allNotifications).hasSize(2);
     assertThat(allNotifications)
-        .extracting("id")
-        .doesNotContain(toDelete.getId());
+            .extracting("id")
+            .doesNotContain(toDelete.getId());
   }
 }
