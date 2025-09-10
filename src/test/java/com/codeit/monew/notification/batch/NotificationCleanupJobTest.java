@@ -42,8 +42,8 @@ class NotificationCleanupJobTest {
   @Autowired
   private UserRepository userRepository;
 
-  @MockitoBean
-  private NotificationCleanupScheduler notificationCleanupScheduler;
+//  @MockitoBean
+//  private NotificationCleanupScheduler notificationCleanupScheduler;
 
   @AfterEach
   void tearDown() {
