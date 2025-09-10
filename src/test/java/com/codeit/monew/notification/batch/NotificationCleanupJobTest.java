@@ -31,7 +31,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
         "spring.quartz.auto-startup=false"
 })
 @SpringBatchTest
-@ActiveProfiles("test")
 class NotificationCleanupJobTest {
 
   @Autowired

@@ -18,8 +18,8 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
   List<Notification> findByConfirmedTrueAndUpdatedAtBefore(LocalDateTime weekAgo);
 
   //테스트용
-  @Modifying
   @Transactional // update 쿼리 실행에 필요한 트랜잭션
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query("update Notification n set n.updatedAt = :updatedAt where n.id = :id")
   void updateUpdatedAt(@Param("id") UUID id, @Param("updatedAt") LocalDateTime updatedAt);
 }
