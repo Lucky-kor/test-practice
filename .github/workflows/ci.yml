@@ -3,7 +3,7 @@
 name: CI Workflow
 
 on:
-  pull_request:
+  push:
     branches: [dev, main] # dev, main 브랜치에 pull request 될 때 실행됨
     paths-ignore: ["README.md", "**/*.md"]
 #  push:
