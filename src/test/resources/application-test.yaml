@@ -21,7 +21,7 @@ spring:
     notification-cleanup:
       cron: "0 0 0 * * ?"
     jdbc:
-      initialize-schema: always   #  H2용 배치 스키마 항상 실행
+      initialize-schema: never   #  H2용 배치 스키마 항상 실행
 
   task:
     scheduling:
